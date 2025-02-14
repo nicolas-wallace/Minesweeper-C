@@ -212,8 +212,6 @@ Node* createMinefield(int rows, int cols) {
     return head;
 }
 
-
-
 void printMinefield(Node* head, int rows, int cols) {
 
     // aqui mostra o campo minado no console, não tá no padrão do miguel pq a gente decidiu fazer uma interface no GTK
