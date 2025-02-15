@@ -41,7 +41,7 @@ int main() {
     // configurar número de bombas
     int maxBombs = (rows * cols) / 5;
     do {
-        printf("Digite o número de bombas (7-%d): ", maxBombs);
+        printf("Digite o numero de bombas (7-%d): ", maxBombs);
         scanf("%d", &bombs);
     } while (bombs < 7 || bombs > maxBombs);
 
@@ -53,7 +53,7 @@ int main() {
     int chosenRow, chosenCol;
     while (true) {
         // solicita input do jogador
-        printf("\nEscolha uma célula para explorar (linha coluna): ");
+        printf("\nEscolha uma celula para explorar (linha coluna): ");
         scanf("%d %d", &chosenRow, &chosenCol);
 
         if (chosenRow < 0 || chosenRow >= rows || chosenCol < 0 || chosenCol >= cols) {
