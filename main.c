@@ -57,7 +57,7 @@ int main() {
         scanf("%d %d", &chosenRow, &chosenCol);
 
         if (chosenRow < 0 || chosenRow >= rows || chosenCol < 0 || chosenCol >= cols) {
-            printf("Posição inválida! Escolha dentro da grade.\n");
+            printf("Posição invalida, escolha dentro da grade.\n");
             continue;
         }
 
