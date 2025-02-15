@@ -1,1 +1,1 @@
-Projeto incompleto.
+Projeto parcialmente funcional.
