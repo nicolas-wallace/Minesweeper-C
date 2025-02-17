@@ -8,6 +8,7 @@ typedef struct Node {
     int bombCount;
     bool isBomb;
     bool isRevealed;
+    bool isFlagged;
     struct Node *left, *right, *up, *down;
 } Node;
 
@@ -18,6 +19,7 @@ Node* createNode();
 Node* createMinefield();
 Node* getNode();
 
+void toggleFlag();
 void exploreNode();
 void placeBombs();
 void updateBombNumber();
@@ -26,11 +28,15 @@ void debugPrintMinefield();
 void userPrintMinefield();
 void freeMinefield();
 
+int getBoardSize();
+
 
 int main() {
     int rows, cols, bombs;
+    int flagsLeft, flagCount;
 
     // configurar tamanho do tabuleiro
+
     do {
         printf("Digite as linhas (5-26): ");
         scanf("%d", &rows);
@@ -39,11 +45,18 @@ int main() {
     } while (rows < 5 || rows > 26 || cols < 5 || cols > 40);
 
     // configurar número de bombas
-    int maxBombs = (rows * cols) / 5;
+    int maxBombs = (rows*cols)/5;
+    
+    if (maxBombs < 7) {
+        maxBombs = 7;
+    }
+
     do {
         printf("Digite o numero de bombas (7-%d): ", maxBombs);
         scanf("%d", &bombs);
     } while (bombs < 7 || bombs > maxBombs);
+
+    flagsLeft = bombs;
 
     // cria e configura o campo minado
     Node* head = createMinefield(rows, cols);
@@ -51,23 +64,48 @@ int main() {
     updateBombNumber(head, rows, cols);
 
     int chosenRow, chosenCol;
+    char op;
+
     while (true) {
         // solicita input do jogador
-        printf("\nEscolha uma celula para explorar (linha coluna): ");
-        scanf("%d %d", &chosenRow, &chosenCol);
+        userPrintMinefield(head, rows, cols);
+        printf("\nEscolha uma celula e se deseja explorar 'e' ou marcar 'f' (linha coluna opcao): ");
+        scanf("%d %d %c", &chosenRow, &chosenCol, &op);
 
         if (chosenRow < 0 || chosenRow >= rows || chosenCol < 0 || chosenCol >= cols) {
             printf("Posição invalida, escolha dentro da grade.\n");
             continue;
         }
 
-        // explora cell escolhida
-        exploreNode(head, chosenRow, chosenCol);
 
-        // acertou uma bomba, finaliza o jogo
         Node* selected = getNode(head, chosenRow, chosenCol);
-        if (selected->isBomb) {
-            break;
+
+        if (op == 'f' || op == 'F') {
+            Node* selected = getNode(head, chosenRow, chosenCol);
+
+            if (!selected->isFlagged && selected->isBomb) {
+                flagsLeft--;
+            } 
+            else if (selected->isFlagged && selected->isBomb) {
+                flagsLeft++;
+            }
+
+            if (flagsLeft == 0) {
+                printf("Voce venceu!");
+                break;
+            }
+
+            toggleFlag(head, chosenRow, chosenCol);
+            printf("\n %d \n", flagsLeft);
+        }
+
+        if (op == 'e' || op == 'E') {
+            exploreNode(head, chosenRow, chosenCol);
+
+            if (selected->isBomb) {
+                printf("Voce perdeu!");
+                break;
+            }
         }
     }
 
@@ -84,6 +122,7 @@ Node* createNode() {
     newNode->bombCount = 0;
     newNode->isBomb = false;
     newNode->isRevealed = false;
+    newNode->isFlagged = false;
     newNode->left = newNode->right = newNode->up = newNode->down = NULL;
     return newNode;
 }
@@ -241,8 +280,6 @@ Node* createMinefield(int rows, int cols) {
     return head;
 }
 
-
-
 void debugPrintMinefield(Node* head) {
 
     // aqui mostra o campo minado no console, não tá no padrão do miguel pq a gente decidiu fazer uma interface com o GTK
@@ -272,17 +309,35 @@ void debugPrintMinefield(Node* head) {
     }
 }
 
-void userPrintMinefield(Node* head) {
-    
-    // isso aqui é para printar o campo minado escondido, ainda não está nem perto de ser terminado
+void userPrintMinefield(Node* head, int r, int c) {
+    int i, j = 0;
+
+    printf("  ");
+    for (i = 0; i < c; i++) {
+        printf(" %d ", i);
+    }
+    printf("\n");
 
     Node* rowStart = head;
     while (rowStart != NULL) {
         Node* temp = rowStart;
+        printf("%d ", j);
         while (temp != NULL) {
-            printf(" # ");
+            if (temp->isRevealed) {
+                if (temp->bombCount == 0) {
+                    printf(" 0 ");
+                } else {
+                    printf(" %d ", temp->bombCount);
+                }
+            } else if (temp->isFlagged) {
+                printf(" F ");
+            } else {
+                printf(" # ");
+            }
             temp = temp->right;
+
         }
+        j++;
         printf("\n");
         rowStart = rowStart->down;
     }
@@ -345,33 +400,23 @@ Node* getNode(Node* head, int row, int col) {
 
 void exploreNode(Node* head, int chosenRow, int chosenCol) {
     Node* selected = getNode(head, chosenRow, chosenCol);
-    if (!selected || selected->isRevealed) return;
+    if (!selected || selected->isRevealed) {
+        return;
+    }
 
-    // se for uma bomba, cabou o jogo
+    // se for uma bomba, não faz nada. O break do laço fica fora da função
     if (selected->isBomb) {
-        printf("\nVocê pisou numa bomba. Game over.\n");
         return;
     }
     // revela a célula e expande se for zero, não vou explicar, tá explicado já na função
     revealNodes(selected);
 
-    // atualiza o tabuleiro
-    Node* rowStart = head;
-    printf("\nTabuleiro Atualizado:\n");
 
-    for (int r = 0; rowStart; r++) {
-        Node* temp = rowStart;
-        for (int c = 0; temp; c++) {
-            if (temp->isRevealed) {
-                if (temp->bombCount == 0) printf(" 0 ");
-                else printf(" %d ", temp->bombCount);
-            } else {
-                printf(" # ");
-            }
-            temp = temp->right;
-        }
-        printf("\n");
-        rowStart = rowStart->down;
-    }
 }
 
+void toggleFlag(Node* head, int row, int col) {
+    Node* selected = getNode(head, row, col);
+    if (!selected || selected->isRevealed) return;
+
+    selected->isFlagged = !selected->isFlagged;
+}
