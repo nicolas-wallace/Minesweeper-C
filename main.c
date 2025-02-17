@@ -16,27 +16,28 @@ typedef struct Node {
 // lembrar de retirar e colocar em outro arquivo depois
 
 Node* createNode();
-Node* createMinefield();
-Node* getNode();
+Node* createMinefield(int rows, int cols);
+Node* getNode(Node* head, int row, int col);
 
-void toggleFlag();
-void exploreNode();
-void placeBombs();
-void updateBombNumber();
-void debugMinefield();
-void debugPrintMinefield();
-void userPrintMinefield();
-void freeMinefield();
+void toggleFlag(Node* head, int row, int col);
+void exploreNode(Node* head, int chosenRow, int chosenCol);
+void placeBombs(Node* head, int rows, int cols, int bombCount);
+void updateBombNumber(Node* head, int rows, int cols);
+void debugMinefield(Node* head);
+void debugPrintMinefield(Node* head);
+void userPrintMinefield(Node* head, int r, int c);
+void freeMinefield(Node* head);
+void revealNodes(Node* node);
 
 int getBoardSize();
+int getIntChosenRow(char c);
 
 
 int main() {
     int rows, cols, bombs;
-    int flagsLeft, flagCount;
+    int flagsLeft, correctlyFlagged = 0;
 
     // configurar tamanho do tabuleiro
-
     do {
         printf("Digite as linhas (5-26): ");
         scanf("%d", &rows);
@@ -64,46 +65,74 @@ int main() {
     updateBombNumber(head, rows, cols);
 
     int chosenRow, chosenCol;
-    char op;
+    char charChosenRow, op;
 
     while (true) {
         // solicita input do jogador
         userPrintMinefield(head, rows, cols);
-        printf("\nEscolha uma celula e se deseja explorar 'e' ou marcar 'f' (linha coluna opcao): ");
-        scanf("%d %d %c", &chosenRow, &chosenCol, &op);
+        printf("Escreva tudo junto, sem espacos.\n");
+        printf("Digite # para marcar uma bomba e ! para explorar.");
+        printf("\nEscolha uma celula e se deseja explorar 'e' ou marcar 'f' (formato opcao-linha-coluna -- ex. #A1): ");
+        
+        // acredita que eu não sabia que scanf retornava um int?
+        int input = scanf(" %c%c%d", &op, &charChosenRow, &chosenCol);
+        if (input != 3) {
+            printf("Entrada invalida. por favor, siga o formato 'opcao-linha-coluna' -- ex. #A1.\n");
+            // limpa o buffer de entrada
+            while ((getchar()) != '\n');
+            continue;
+        }
+
+        /* 
+        esse decremental aqui é pq a lógica do programa funciona com índice inicial 0, mas o do miguel começa com 1 kkkkkkkkkkkkkkk 
+        então, para o usuário, ele escolhe de 1 a 40, o programa entende de 0 a 39
+        */
+        chosenCol--;
+
+        // isso aqui é a mesma coisa, pq mtas funções precisam saber qual linha o usuário escolheu e manipular um char é péssimo
+        chosenRow = getIntChosenRow(charChosenRow);
 
         if (chosenRow < 0 || chosenRow >= rows || chosenCol < 0 || chosenCol >= cols) {
             printf("Posição invalida, escolha dentro da grade.\n");
             continue;
         }
 
-
         Node* selected = getNode(head, chosenRow, chosenCol);
 
-        if (op == 'f' || op == 'F') {
-            Node* selected = getNode(head, chosenRow, chosenCol);
-
-            if (!selected->isFlagged && selected->isBomb) {
+        if (op == '#') {
+            // verifica se já tava marcado
+            bool wasFlagged = selected->isFlagged;
+            
+            toggleFlag(head, chosenRow, chosenCol);
+            
+            // Atualiza contadores após mudar o estado da flag
+            if (!wasFlagged && selected->isBomb) {
+                // uma bomba foi marcada corretamente
                 flagsLeft--;
+                correctlyFlagged++;
             } 
-            else if (selected->isFlagged && selected->isBomb) {
+            else if (wasFlagged && selected->isBomb) {
+                // uma bomba foi desmarcada
                 flagsLeft++;
+                correctlyFlagged--;
             }
-
-            if (flagsLeft == 0) {
-                printf("Voce venceu!");
+            
+            // verifica condição de vitória e encerra o laço
+            if (correctlyFlagged == bombs && flagsLeft == 0) {
+                userPrintMinefield(head, rows, cols);
+                printf("\nVoce venceu!\n");
                 break;
             }
-
-            toggleFlag(head, chosenRow, chosenCol);
-            printf("\n %d \n", flagsLeft);
+            
+            printf("\nBandeiras restantes: %d\n", flagsLeft);
         }
 
-        if (op == 'e' || op == 'E') {
+        if (op == '!') {
             exploreNode(head, chosenRow, chosenCol);
 
             if (selected->isBomb) {
-                printf("Voce perdeu!");
+                userPrintMinefield(head, rows, cols);
+                printf("\nVoce perdeu!\n");
                 break;
             }
         }
@@ -158,7 +187,7 @@ void placeBombs(Node* head, int rows, int cols, int bombCount) {
     }
 }
 
-void updateBombNumber(Node* head) {
+void updateBombNumber(Node* head, int rows, int cols) {
 
     // mesma ladainha de sempre, percorre a lista encadeada bidimensional e verifica cada quadradinho do tabuleiro individualmente
 
@@ -311,34 +340,64 @@ void debugPrintMinefield(Node* head) {
 
 void userPrintMinefield(Node* head, int r, int c) {
     int i, j = 0;
+    char str[26] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-    printf("  ");
+    // printa as dezenas das colunas
+    printf("   ");
+    for (i = 1; i <= c; i++) {
+        if (i >= 10) {
+            printf("%d ", i / 10);
+        } else {
+            printf("  ");
+        }
+    }
+    printf("\n");
+
+    // printa as unidades das colunas
+    printf("   ");
+    for (i = 1; i <= c; i++) {
+        printf("%d ", i % 10);
+    }
+    printf("\n");
+
+    // printa a borda superior
+    printf("  +");
     for (i = 0; i < c; i++) {
-        printf(" %d ", i);
+        printf("-+");
     }
     printf("\n");
 
     Node* rowStart = head;
     while (rowStart != NULL) {
         Node* temp = rowStart;
-        printf("%d ", j);
+        
+        // print as letras de linha
+        printf("%c |", str[j]);
+        
+        // printa o conteúdo dos quadrados
         while (temp != NULL) {
             if (temp->isRevealed) {
                 if (temp->bombCount == 0) {
-                    printf(" 0 ");
+                    printf(" |");
                 } else {
-                    printf(" %d ", temp->bombCount);
+                    printf("%d|", temp->bombCount);
                 }
             } else if (temp->isFlagged) {
-                printf(" F ");
+                printf("F|");
             } else {
-                printf(" # ");
+                printf("#|");
             }
             temp = temp->right;
-
         }
-        j++;
         printf("\n");
+        
+        // printa a linha horizontal que separa as linhas (rows)
+        printf("  +");
+        for (i = 0; i < c; i++) {
+            printf("-+");
+        }
+        printf("\n");
+        j++;
         rowStart = rowStart->down;
     }
 }
@@ -360,28 +419,14 @@ void revealNodes(Node* node) {
         revealNodes(node->left);
         revealNodes(node->right);
 
-        if (node->up != NULL) {
+        if (node->up) {
             revealNodes(node->up->left);
-        } else {
-            revealNodes(NULL);
-        }
-        
-        if (node->up != NULL) {
             revealNodes(node->up->right);
-        } else {
-            revealNodes(NULL);
         }
         
-        if (node->down != NULL) {
+        if (node->down) {
             revealNodes(node->down->left);
-        } else {
-            revealNodes(NULL);
-        }
-        
-        if (node->down != NULL) {
             revealNodes(node->down->right);
-        } else {
-            revealNodes(NULL);
         }
     }
 }
@@ -406,12 +451,11 @@ void exploreNode(Node* head, int chosenRow, int chosenCol) {
 
     // se for uma bomba, não faz nada. O break do laço fica fora da função
     if (selected->isBomb) {
+        selected->isRevealed = true;  // Revela a bomba para mostrar ao jogador
         return;
     }
     // revela a célula e expande se for zero, não vou explicar, tá explicado já na função
     revealNodes(selected);
-
-
 }
 
 void toggleFlag(Node* head, int row, int col) {
@@ -419,4 +463,18 @@ void toggleFlag(Node* head, int row, int col) {
     if (!selected || selected->isRevealed) return;
 
     selected->isFlagged = !selected->isFlagged;
+}
+
+int getIntChosenRow(char c) {
+    char upper[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    char lower[] = "abcdefghijklmnopqrstuvwxyz";
+    int i;
+    
+    for (i = 0; i < 26; i++) {
+        if (c == upper[i] || c == lower[i]) {
+            return i;
+        }
+    }
+
+    return -1;
 }
