@@ -187,7 +187,7 @@ void placeBombs(Node* head, int rows, int cols, int bombCount) {
     }
 }
 
-void updateBombNumber(Node* head, int rows, int cols) {
+void updateBombNumber(Node* head) {
 
     // mesma ladainha de sempre, percorre a lista encadeada bidimensional e verifica cada quadradinho do tabuleiro individualmente
 
@@ -338,7 +338,7 @@ void debugPrintMinefield(Node* head) {
     }
 }
 
-void userPrintMinefield(Node* head, int r, int c) {
+void userPrintMinefield(Node* head, int c) {
     int i, j = 0;
     char str[26] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
