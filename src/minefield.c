@@ -199,10 +199,10 @@ void userPrintMinefield(Node* head, int c) {
                     printf("%d|", temp->bombCount);
                 }
             } else if (temp->isFlagged) {
-                printf(YELLOW"F"RESET);
+                printf(GREEN"#"RESET);
                 printf("|");
             } else {
-                printf(CYAN"■"RESET);
+                printf(CYAN"█"RESET);
                 printf("|");
             }
             temp = temp->right;

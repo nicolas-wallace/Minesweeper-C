@@ -110,42 +110,47 @@ int main() {
         // solicita input do jogador
         userPrintMinefield(head, rows, cols);
         printf("Escreva tudo junto, sem espacos.\n");
-        printf("Digite # para marcar ou desmarcar uma bomba e ! para explorar.");
-        printf("\nEscolha uma celula e se deseja explorar 'e' ou marcar 'f': ");
-        printf("\n(ex. #A1 para marcar uma bandeira e !B2 para explorar)\n");
+        printf("Digite # para marcar ou desmarcar uma bomba, e ! para desmarcar uma bandeira.");
+        printf("\nEscolha uma celula: ");
+        printf("\n(ex. #A1 para marcar/desmarcar bandeira, !A1 para desmarcar bandeira, A1 para explorar)\n");
         
-        // acredita que eu não sabia que scanf retornava um int?
-        int input = scanf(" %c%c%d", &op, &charChosenRow, &chosenCol);
-        if (input != 3) {
-            printf("Entrada invalida. por favor, siga o formato 'opcao-linha-coluna' -- ex. #A1.\n");
-            // limpa o buffer de entrada
-            while ((getchar()) != '\n');
-            continue;
+        char input[10];  // buffer para entrada do usuário
+        scanf("%s", input);
+        
+        // determina a operação e a coordenada
+        char op = '\0'; // padrão: sem operação explícita (explorar)
+        char charChosenRow;
+        int chosenCol;
+        
+        if (input[0] == '#' || input[0] == '!') {
+            op = input[0]; // guarda a operação
+            // Extraímos a letra e o número a partir do segundo caractere
+            charChosenRow = input[1];
+            chosenCol = atoi(&input[2]); // Converte o resto da string para inteiro
+        } else {
+            // Nenhuma operação especial, só a coordenada (para explorar)
+            charChosenRow = input[0];
+            chosenCol = atoi(&input[1]); // Converte o resto da string para inteiro
         }
-
-        /* 
-        esse decremento aqui é pq a lógica do programa funciona com índice inicial 0, mas o do miguel começa com 1 kkkkkkkkkkkkkkk 
-        então, para o usuário, ele escolhe de 1 a 40, o programa entende de 0 a 39
-        */
+        
+        // Ajustando índice para lógica interna
         chosenCol--;
-
-        // isso aqui é a mesma coisa, pq mtas funções precisam saber qual linha o usuário escolheu e manipular um char é péssimo
         chosenRow = getIntChosenRow(charChosenRow);
-
+        
         if (chosenRow < 0 || chosenRow >= rows || chosenCol < 0 || chosenCol >= cols) {
             printf("Posição invalida, escolha dentro da grade.\n");
             continue;
         }
-
+        
         Node* selected = getNode(head, chosenRow, chosenCol);
-
+        
         if (op == '#') {
             // pra ver se já tava marcado
             bool wasFlagged = selected->isFlagged;
             
             toggleFlag(head, chosenRow, chosenCol);
             
-            // Atualiza contadores após mudar o estado da flag
+            // atualiza contadores após mudar o estado da flag
             if (!wasFlagged && selected->isBomb) {
                 // uma bomba foi marcada corretamente
                 flagsLeft--;
@@ -156,7 +161,6 @@ int main() {
                 flagsLeft++;
                 correctlyFlagged--;
             }
-
             
             // verifica condição de vitória e encerra o laço
             if (correctlyFlagged == bombs && flagsLeft == 0) {
@@ -165,11 +169,22 @@ int main() {
                 gameWon = true;
                 break;
             }
-        }
-
-        if (op == '!') {
+        } else if (op == '!') {
+            // desmarcar bandeira
+            if (selected->isFlagged) {
+                toggleFlag(head, chosenRow, chosenCol);
+                // se for uma bomba, atualiza contadores
+                if (selected->isBomb) {
+                    flagsLeft++;
+                    correctlyFlagged--;
+                }
+            } else {
+                printf("Essa celula não tem bandeira para remover.\n");
+            }
+        } else {
+            // explorar (quando não tem operação específica)
             exploreNode(head, chosenRow, chosenCol);
-
+            
             if (selected->isBomb) {
                 // usuário perde o jogo e revela o tabuleiro completo
                 userPrintMinefield(head, rows, cols);
