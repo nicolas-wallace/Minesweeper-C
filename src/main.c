@@ -7,6 +7,40 @@
 #include "../include/minefield.h"
 #include "../include/colors.h"
 
+/*
+—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+Nicolas Wallace
+Contribuição: Criação e elaboração da estrutura de dados (lista encadeada bidimensional), algoritmo de recursão 
+para revelar os zeros, contador de bombas adjacentes, modularização do código, criação do Makefile, debugging do 
+código e manuseamento de memória.
+
+Responsável pelas funções:
+Node* getNode();
+Node* createNode();
+Node* createMinefield();
+void freeMinefield();
+void revealNodes();
+void debugMinefield();
+void debugPrintMinefield();
+void updateBombNumber();
+parte de int main();
+—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+Yasmin Amorim
+Contribuição: Revisão e contribuição para a estrutura de dados, eficiência do código, interface gráfica, estética, 
+otimização do código, macros para as cores, título MINESWEEPER em ASCII, funções de leitura de dados, verificações
+de entrada de usuário e UX
+
+Responsável pelas funções:
+void userPrintMinefield();
+void revealMinefield();
+void toggleFlag();
+void limparTela();
+int getBoardSize();
+int getIntChosenRow();
+parte de void revealNodes();
+parte de int main();
+—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+*/
 
 int main() {
     
@@ -137,6 +171,7 @@ int main() {
             exploreNode(head, chosenRow, chosenCol);
 
             if (selected->isBomb) {
+                // usuário perde o jogo e revela o tabuleiro completo
                 userPrintMinefield(head, rows, cols);
                 printf("\nVoce perdeu!\n");
                 revealMinefield(head, rows, cols);
@@ -145,6 +180,8 @@ int main() {
             }
         }
     }
+
+    // tela de saída
 
     if (gameLost || gameWon) {
         while (true) {
