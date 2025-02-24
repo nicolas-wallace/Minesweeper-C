@@ -3,157 +3,15 @@
 #include <stdbool.h>
 #include <time.h>
 #include <math.h>
+#include "../include/dataStructure.h"
+#include "../include/colors.h"
 
-typedef struct Node {
-    int bombCount;
-    bool isBomb;
-    bool isRevealed;
-    bool isFlagged;
-    struct Node *left, *right, *up, *down;
-} Node;
-
-// definição prévia das funções só para a função main não ficar lá embaixo
-// lembrar de retirar e colocar em outro arquivo depois
-
-Node* createNode();
-Node* createMinefield(int rows, int cols);
-Node* getNode(Node* head, int row, int col);
-
-void toggleFlag(Node* head, int row, int col);
-void exploreNode(Node* head, int chosenRow, int chosenCol);
-void placeBombs(Node* head, int rows, int cols, int bombCount);
-void updateBombNumber(Node* head, int rows, int cols);
-void debugMinefield(Node* head);
-void debugPrintMinefield(Node* head);
-void userPrintMinefield(Node* head, int r, int c);
-void freeMinefield(Node* head);
-void revealNodes(Node* node);
-
-int getBoardSize();
-int getIntChosenRow(char c);
-
-
-int main() {
-    int rows, cols, bombs;
-    int flagsLeft, correctlyFlagged = 0;
-
-    // configurar tamanho do tabuleiro
-    do {
-        printf("Digite as linhas (5-26): ");
-        scanf("%d", &rows);
-        printf("Digite as colunas (5-40): ");
-        scanf("%d", &cols);
-    } while (rows < 5 || rows > 26 || cols < 5 || cols > 40);
-
-    // configurar número de bombas
-    int maxBombs = (rows*cols)/5;
-    
-    if (maxBombs < 7) {
-        maxBombs = 7;
-    }
-
-    do {
-        printf("Digite o numero de bombas (7-%d): ", maxBombs);
-        scanf("%d", &bombs);
-    } while (bombs < 7 || bombs > maxBombs);
-
-    flagsLeft = bombs;
-
-    // cria e configura o campo minado
-    Node* head = createMinefield(rows, cols);
-    placeBombs(head, rows, cols, bombs);
-    updateBombNumber(head, rows, cols);
-
-    int chosenRow, chosenCol;
-    char charChosenRow, op;
-
-    while (true) {
-        // solicita input do jogador
-        userPrintMinefield(head, rows, cols);
-        printf("Escreva tudo junto, sem espacos.\n");
-        printf("Digite # para marcar uma bomba e ! para explorar.");
-        printf("\nEscolha uma celula e se deseja explorar 'e' ou marcar 'f' (formato opcao-linha-coluna -- ex. #A1): ");
-        
-        // acredita que eu não sabia que scanf retornava um int?
-        int input = scanf(" %c%c%d", &op, &charChosenRow, &chosenCol);
-        if (input != 3) {
-            printf("Entrada invalida. por favor, siga o formato 'opcao-linha-coluna' -- ex. #A1.\n");
-            // limpa o buffer de entrada
-            while ((getchar()) != '\n');
-            continue;
-        }
-
-        /* 
-        esse decremental aqui é pq a lógica do programa funciona com índice inicial 0, mas o do miguel começa com 1 kkkkkkkkkkkkkkk 
-        então, para o usuário, ele escolhe de 1 a 40, o programa entende de 0 a 39
-        */
-        chosenCol--;
-
-        // isso aqui é a mesma coisa, pq mtas funções precisam saber qual linha o usuário escolheu e manipular um char é péssimo
-        chosenRow = getIntChosenRow(charChosenRow);
-
-        if (chosenRow < 0 || chosenRow >= rows || chosenCol < 0 || chosenCol >= cols) {
-            printf("Posição invalida, escolha dentro da grade.\n");
-            continue;
-        }
-
-        Node* selected = getNode(head, chosenRow, chosenCol);
-
-        if (op == '#') {
-            // verifica se já tava marcado
-            bool wasFlagged = selected->isFlagged;
-            
-            toggleFlag(head, chosenRow, chosenCol);
-            
-            // Atualiza contadores após mudar o estado da flag
-            if (!wasFlagged && selected->isBomb) {
-                // uma bomba foi marcada corretamente
-                flagsLeft--;
-                correctlyFlagged++;
-            } 
-            else if (wasFlagged && selected->isBomb) {
-                // uma bomba foi desmarcada
-                flagsLeft++;
-                correctlyFlagged--;
-            }
-            
-            // verifica condição de vitória e encerra o laço
-            if (correctlyFlagged == bombs && flagsLeft == 0) {
-                userPrintMinefield(head, rows, cols);
-                printf("\nVoce venceu!\n");
-                break;
-            }
-            
-            printf("\nBandeiras restantes: %d\n", flagsLeft);
-        }
-
-        if (op == '!') {
-            exploreNode(head, chosenRow, chosenCol);
-
-            if (selected->isBomb) {
-                userPrintMinefield(head, rows, cols);
-                printf("\nVoce perdeu!\n");
-                break;
-            }
-        }
-    }
-
-    // limpa a memória, só recebe o primeiro termo da lista e vai limpando de um por um
-    freeMinefield(head);
-    return EXIT_SUCCESS;
-}
-
-Node* createNode() {
-
-    /* esse aqui não tem segredo, a gente só aloca memória mesmo e cria um nódulo */
-
-    Node* newNode = (Node*)malloc(sizeof(Node));
-    newNode->bombCount = 0;
-    newNode->isBomb = false;
-    newNode->isRevealed = false;
-    newNode->isFlagged = false;
-    newNode->left = newNode->right = newNode->up = newNode->down = NULL;
-    return newNode;
+void limparTela() {
+    #ifdef _WIN32
+        system("cls");  // Para Windows
+    #else
+        system("clear"); // Para Linux/macOS
+    #endif
 }
 
 void placeBombs(Node* head, int rows, int cols, int bombCount) {
@@ -266,49 +124,6 @@ void freeMinefield(Node* head) {
     }
 }
 
-Node* createMinefield(int rows, int cols) {
-    Node* head = createNode(); // nó inicial
-    Node* temp = head; // ponteiro temporário para percorrer a linha atual
-    Node* prevRowStart = head; // primeiro nó da linha anterior
-
-    // cria a primeira linha do tabuleiro
-    for (int j = 1; j < cols; j++) {
-        Node* newNode = createNode();
-        temp->right = newNode;
-        newNode->left = temp;
-        temp = newNode;
-    }
-
-    // cria todas as outras linhas do tabuleiro
-    for (int i = 1; i < rows; i++) {
-        // cria o primeiro nó da nova linha e conecta à linha anterior
-        Node* newRowStart = createNode();
-        prevRowStart->down = newRowStart;
-        newRowStart->up = prevRowStart;
-
-        temp = newRowStart;
-        Node* prevRowTemp = prevRowStart->right;
-
-        // cria os nós da nova linha os conecta
-        for (int j = 1; j < cols; j++) {
-            Node* newNode = createNode();
-            temp->right = newNode;
-            newNode->left = temp;
-
-            // conecta com a linha de cima
-            if (prevRowTemp != NULL) {
-                prevRowTemp->down = newNode;
-                newNode->up = prevRowTemp;
-                prevRowTemp = prevRowTemp->right;
-            }
-            temp = newNode;
-        }
-        prevRowStart = newRowStart; // atualiza a linha anterior com a nova
-    }
-
-    return head;
-}
-
 void debugPrintMinefield(Node* head) {
 
     // aqui mostra o campo minado no console, não tá no padrão do miguel pq a gente decidiu fazer uma interface com o GTK
@@ -361,9 +176,9 @@ void userPrintMinefield(Node* head, int r, int c) {
     printf("\n");
 
     // printa a borda superior
-    printf("  +");
+    printf(YELLOW"  +"RESET);
     for (i = 0; i < c; i++) {
-        printf("-+");
+        printf(YELLOW"=+"RESET);
     }
     printf("\n");
 
@@ -372,36 +187,35 @@ void userPrintMinefield(Node* head, int r, int c) {
         Node* temp = rowStart;
         
         // print as letras de linha
-        printf("%c |", str[j]);
+        printf(MAGENTA"%c |"RESET, str[j]);
         
         // printa o conteúdo dos quadrados
         while (temp != NULL) {
             if (temp->isRevealed) {
                 if (temp->bombCount == 0) {
-                    printf(" |");
+                    printf(GREEN" |"RESET);
                 } else {
                     printf("%d|", temp->bombCount);
                 }
             } else if (temp->isFlagged) {
-                printf("F|");
+                printf(YELLOW"F|"RESET);
             } else {
-                printf("#|");
+                printf(CYAN"■|"RESET);
             }
             temp = temp->right;
         }
         printf("\n");
         
         // printa a linha horizontal que separa as linhas (rows)
-        printf("  +");
+        printf(YELLOW"  +"RESET);
         for (i = 0; i < c; i++) {
-            printf("-+");
+            printf(YELLOW"=+"RESET);
         }
         printf("\n");
         j++;
         rowStart = rowStart->down;
     }
 }
-
 void revealNodes(Node* node) {
     if (!node || node->isRevealed) return;
 
@@ -429,18 +243,6 @@ void revealNodes(Node* node) {
             revealNodes(node->down->right);
         }
     }
-}
-
-Node* getNode(Node* head, int row, int col) {
-    Node* temp = head;
-    for (int i = 0; i < row && temp; i++) {
-        temp = temp->down;
-    }
-    for (int j = 0; j < col && temp; j++) {
-        temp = temp->right;
-    }
-
-    return temp;
 }
 
 void exploreNode(Node* head, int chosenRow, int chosenCol) {
@@ -477,4 +279,66 @@ int getIntChosenRow(char c) {
     }
 
     return -1;
+}
+
+void revealMinefield(Node* head, int r, int c) {
+    int i, j = 0;
+    char str[26] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    // printa as dezenas das colunas
+    printf("   ");
+    for (i = 1; i <= c; i++) {
+        if (i >= 10) {
+            printf("%d ", i / 10);
+        } else {
+            printf("  ");
+        }
+    }
+    printf("\n");
+
+    // printa as unidades das colunas
+    printf("   ");
+    for (i = 1; i <= c; i++) {
+        printf("%d ", i % 10);
+    }
+    printf("\n");
+
+    // printa a borda superior
+    printf(YELLOW"  +"RESET);
+    for (i = 0; i < c; i++) {
+        printf(YELLOW"=+"RESET);
+    }
+    printf("\n");
+
+    Node* rowStart = head;
+    while (rowStart != NULL) {
+        Node* temp = rowStart;
+        
+        // printa as letras de linha
+        printf(MAGENTA"%c |"RESET, str[j]);
+        
+        // printa o conteúdo dos quadrados
+        while (temp != NULL) {
+            if (temp->bombCount == 0 && !temp->isBomb) {
+                printf(GREEN" |"RESET);
+            } else if (temp->bombCount > 0) {
+                printf("%d|", temp->bombCount);
+            } else if (temp->isBomb) {
+                printf(RED"@|"RESET);  // Representa uma bomba com '@'
+            } else {
+                printf(CYAN"■|"RESET);
+            }
+            temp = temp->right;
+        }
+        printf("\n");
+        
+        // printa a linha horizontal que separa as linhas (rows)
+        printf(YELLOW"  +"RESET);
+        for (i = 0; i < c; i++) {
+            printf(YELLOW"=+"RESET);
+        }
+        printf("\n");
+        j++;
+        rowStart = rowStart->down;
+    }
 }

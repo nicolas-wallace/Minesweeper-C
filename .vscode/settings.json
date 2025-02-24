@@ -1,4 +1,8 @@
 {
     "git.ignoreLimitWarning": true,
-    "C_Cpp.errorSquiggles": "disabled"
+    "C_Cpp.errorSquiggles": "disabled",
+    "files.associations": {
+        "datastructure.h": "c",
+        "colors.h": "c"
+    }
 }
