@@ -22,8 +22,8 @@ int main() {
     printf(" | |\\/| | | '_ \\ / _ \\/ __\\ \\ /\\ / / _ \\/ _ \\ '_ \\ / _ \\ '__|\n");
     printf(" | |  | | | | | |  __/\\__ \\\\ V  V /  __/  __/ |_) |  __/ |   \n");
     printf(" |_|  |_|_|_| |_|\\___||___/ \\_/\\_/ \\___|\\___| .__/ \\___|_|   \n");
-    printf("                                           | |               \n");
-    printf("                                           |_|               \n");
+    printf("                                            | |               \n");
+    printf("                                            |_|               \n");
 
     // reseta a cor para o padrão do terminal
     printf("\033[0m");
@@ -148,8 +148,12 @@ int main() {
 
     if (gameLost || gameWon) {
         while (true) {
+            int esc;
             printf("Digite 1 para sair.");
-            scanf("%d", op);
+            scanf("%d", &esc);
+            if (esc == 1) {
+                break;
+            }
         }
     }
 

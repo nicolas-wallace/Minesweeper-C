@@ -187,20 +187,23 @@ void userPrintMinefield(Node* head, int r, int c) {
         Node* temp = rowStart;
         
         // print as letras de linha
-        printf(MAGENTA"%c |"RESET, str[j]);
+        printf(MAGENTA"%c "RESET, str[j]);
+        printf("|");
         
         // printa o conteúdo dos quadrados
         while (temp != NULL) {
             if (temp->isRevealed) {
                 if (temp->bombCount == 0) {
-                    printf(GREEN" |"RESET);
+                    printf(" |"RESET);
                 } else {
                     printf("%d|", temp->bombCount);
                 }
             } else if (temp->isFlagged) {
-                printf(YELLOW"F|"RESET);
+                printf(YELLOW"F"RESET);
+                printf("|");
             } else {
-                printf(CYAN"■|"RESET);
+                printf(CYAN"■"RESET);
+                printf("|");
             }
             temp = temp->right;
         }
@@ -281,6 +284,8 @@ int getIntChosenRow(char c) {
     return -1;
 }
 
+// variação de userPrintMinefield que revela tudo
+
 void revealMinefield(Node* head, int r, int c) {
     int i, j = 0;
     char str[26] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -315,18 +320,21 @@ void revealMinefield(Node* head, int r, int c) {
         Node* temp = rowStart;
         
         // printa as letras de linha
-        printf(MAGENTA"%c |"RESET, str[j]);
+        printf(MAGENTA"%c "RESET, str[j]);
+        printf("|");
         
         // printa o conteúdo dos quadrados
         while (temp != NULL) {
             if (temp->bombCount == 0 && !temp->isBomb) {
-                printf(GREEN" |"RESET);
+                printf(RESET" |");
             } else if (temp->bombCount > 0) {
                 printf("%d|", temp->bombCount);
             } else if (temp->isBomb) {
-                printf(RED"@|"RESET);  // Representa uma bomba com '@'
+                printf(RED"@"RESET);  // representa uma bomba com '@'
+                printf("|");
             } else {
-                printf(CYAN"■|"RESET);
+                printf(CYAN"■"RESET);
+                printf("|");
             }
             temp = temp->right;
         }
