@@ -123,16 +123,16 @@ int main() {
         
         if (input[0] == '#' || input[0] == '!') {
             op = input[0]; // guarda a operação
-            // Extraímos a letra e o número a partir do segundo caractere
+            // extrai a letra e o número a partir do segundo caractere
             charChosenRow = input[1];
-            chosenCol = atoi(&input[2]); // Converte o resto da string para inteiro
+            chosenCol = atoi(&input[2]); // converte o resto da string para inteiro
         } else {
-            // Nenhuma operação especial, só a coordenada (para explorar)
+            // nenhuma operação especial, só a coordenada (para explorar)
             charChosenRow = input[0];
-            chosenCol = atoi(&input[1]); // Converte o resto da string para inteiro
+            chosenCol = atoi(&input[1]); // converte o resto da string para inteiro
         }
         
-        // Ajustando índice para lógica interna
+        // ajusta índice para lógica interna, pq ela funciona com índice zero e não indice 1
         chosenCol--;
         chosenRow = getIntChosenRow(charChosenRow);
         
@@ -187,7 +187,7 @@ int main() {
             if (selected->isBomb) {
                 // usuário perde o jogo e revela o tabuleiro completo
                 userPrintMinefield(head, rows, cols);
-                printf("\nVoce perdeu!\n");
+                printf("\nVoce acertou uma mina!\n");
                 revealMinefield(head, rows, cols);
                 gameLost = true;
                 break;
