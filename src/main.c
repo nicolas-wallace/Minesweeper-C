@@ -103,14 +103,13 @@ int main() {
     placeBombs(head, rows, cols, bombs);
     updateBombNumber(head, rows, cols);
 
-    int chosenRow, chosenCol;
-    char charChosenRow, op;
+    int chosenRow;
 
     while (true) {
         // solicita input do jogador
         userPrintMinefield(head, rows, cols);
         printf("Escreva tudo junto, sem espacos.\n");
-        printf("Digite # para marcar ou desmarcar uma bomba, e ! para desmarcar uma bandeira.");
+        printf("Digite # para marcar uma bandeira ou ! para desmarcá-la.");
         printf("\nEscolha uma celula: ");
         printf("\n(ex. #A1 para marcar/desmarcar bandeira, !A1 para desmarcar bandeira, A1 para explorar)\n");
         
